@@ -1,0 +1,41 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+glowworm
+/bin/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude
+.claude/
+*.claude
+claude-*
+
+# Frontend
+/frontend/node_modules/
+/frontend/dist/
+
+# Go
+vendor/
+go.work
+
+# Env
+.env
+.env.local
+*.key
+*.pem
+
+# Logs
+*.log
