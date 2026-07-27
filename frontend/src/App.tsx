@@ -1,5 +1,11 @@
 import { useState } from 'react'
 import { Wifi, Search, Zap, Activity, CheckCircle, XCircle, AlertTriangle, Globe, Server, Terminal } from 'lucide-react'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 
 interface Host {
   ip: string
@@ -20,19 +26,16 @@ interface LogEntry {
 const MOCK_HOSTS: Host[] = [
   { ip: '192.168.1.10', ports: [22], services: { 22: 'ssh' }, status: 'infected', hostname: 'ubuntu-server', os: 'Ubuntu 22.04', lastAttempt: '2m ago' },
   { ip: '192.168.1.15', ports: [22, 445], services: { 22: 'ssh', 445: 'smb' }, status: 'infected', hostname: 'file-server', os: 'Windows Server 2019', lastAttempt: '3m ago' },
-  { ip: '192.168.1.20', ports: [445], services: { 445: 'smb' }, status: 'discovered', hostname: 'accounting-pc', os: 'Windows 10', lastAttempt: null },
+  { ip: '192.168.1.20', ports: [445], services: { 445: 'smb' }, status: 'discovered', hostname: 'accounting-pc', os: 'Windows 10', lastAttempt: undefined },
   { ip: '192.168.1.25', ports: [22], services: { 22: 'ssh' }, status: 'failed', hostname: 'hardened-box', os: 'Rocky Linux 9', lastAttempt: '5m ago' },
   { ip: '192.168.1.30', ports: [22, 445], services: { 22: 'ssh', 445: 'smb' }, status: 'infected', hostname: 'dev-workstation', os: 'Ubuntu 24.04', lastAttempt: '1m ago' },
   { ip: '192.168.1.35', ports: [445], services: { 445: 'smb' }, status: 'immune', hostname: 'backup-nas', os: 'Synology DSM', lastAttempt: '4m ago' },
   { ip: '192.168.1.40', ports: [22], services: { 22: 'ssh' }, status: 'infected', hostname: 'raspberry-pi', os: 'Raspbian 11', lastAttempt: '30s ago' },
-  { ip: '192.168.1.45', ports: [22, 445], services: { 22: 'ssh', 445: 'smb' }, status: 'discovered', hostname: 'print-server', os: 'Windows Server 2016', lastAttempt: null },
+  { ip: '192.168.1.45', ports: [22, 445], services: { 22: 'ssh', 445: 'smb' }, status: 'discovered', hostname: 'print-server', os: 'Windows Server 2016', lastAttempt: undefined },
   { ip: '192.168.1.50', ports: [22], services: { 22: 'ssh' }, status: 'infected', hostname: 'docker-host', os: 'Debian 12', lastAttempt: '45s ago' },
   { ip: '192.168.1.55', ports: [445], services: { 445: 'smb' }, status: 'failed', hostname: 'hr-desktop', os: 'Windows 11', lastAttempt: '6m ago' },
   { ip: '192.168.1.60', ports: [22], services: { 22: 'ssh' }, status: 'infected', hostname: 'monitoring', os: 'CentOS 8', lastAttempt: '2m ago' },
-  { ip: '192.168.1.65', ports: [22, 445], services: { 22: 'ssh', 445: 'smb' }, status: 'discovered', hostname: 'sales-pc', os: 'Windows 10', lastAttempt: null },
-  { ip: '192.168.1.70', ports: [22], services: { 22: 'ssh' }, status: 'infected', hostname: 'jenkins-ci', os: 'Ubuntu 20.04', lastAttempt: '15s ago' },
-  { ip: '192.168.1.75', ports: [445], services: { 445: 'smb' }, status: 'immune', hostname: 'domain-ctrl', os: 'Windows Server 2022', lastAttempt: '3m ago' },
-  { ip: '192.168.1.80', ports: [22], services: { 22: 'ssh' }, status: 'infected', hostname: 'kali-test', os: 'Kali 2024.1', lastAttempt: '1m ago' },
+  { ip: '192.168.1.65', ports: [22, 445], services: { 22: 'ssh', 445: 'smb' }, status: 'discovered', hostname: 'sales-pc', os: 'Windows 10', lastAttempt: undefined },
 ]
 
 const INITIAL_LOGS: LogEntry[] = [
@@ -40,7 +43,7 @@ const INITIAL_LOGS: LogEntry[] = [
   { time: '14:30:02', message: 'Loaded SSH vector with 15 credential pairs', type: 'info' },
   { time: '14:30:02', message: 'Loaded SMB vector with 8 credential pairs', type: 'info' },
   { time: '14:30:05', message: 'Starting scan of 192.168.1.0/24', type: 'info' },
-  { time: '14:30:12', message: 'Found 15 hosts with open ports', type: 'success' },
+  { time: '14:30:12', message: 'Found 12 hosts with open ports', type: 'success' },
   { time: '14:31:00', message: 'SSH auth success: ubuntu-server (root:toor)', type: 'success' },
   { time: '14:31:05', message: 'Payload deployed to ubuntu-server', type: 'success' },
   { time: '14:31:15', message: 'SSH auth failed: hardened-box (pubkey only)', type: 'error' },
@@ -65,9 +68,7 @@ function App() {
   async function startScan() {
     setScanning(true)
     addLog(`Scanning ${targetRange}...`, 'info')
-
     await new Promise(r => setTimeout(r, 1500))
-
     const newHosts = MOCK_HOSTS.map(h => ({ ...h, status: 'discovered' as const }))
     setHosts(newHosts)
     addLog(`Found ${newHosts.length} hosts with open ports`, 'success')
@@ -106,7 +107,6 @@ function App() {
         }
       }
     }
-
     addLog('Spread complete', 'success')
   }
 
@@ -119,247 +119,223 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100">
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 dark">
       {/* Header */}
       <header className="border-b border-zinc-800 px-6 py-4">
         <div className="flex items-center justify-between max-w-7xl mx-auto">
           <h1 className="text-2xl font-bold flex items-center gap-3">
             <Zap className="w-6 h-6 text-green-400" />
-            <span className="glow">glowworm</span>
-            <span className="text-xs text-zinc-500 font-normal">v0.1.0</span>
+            <span className="text-green-400">glowworm</span>
+            <Badge variant="outline" className="text-xs">v0.1.0</Badge>
           </h1>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto p-6 space-y-6">
-        {/* Stats Bar */}
+        {/* Stats */}
         <div className="grid grid-cols-5 gap-4">
-          <div className="bg-zinc-900 rounded-lg p-4 text-center">
-            <Globe className="w-6 h-6 text-zinc-400 mx-auto mb-2" />
-            <div className="text-2xl font-bold">{stats.total}</div>
-            <div className="text-xs text-zinc-500">Discovered</div>
-          </div>
-          <div className="bg-zinc-900 rounded-lg p-4 text-center">
-            <CheckCircle className="w-6 h-6 text-green-400 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-green-400">{stats.infected}</div>
-            <div className="text-xs text-zinc-500">Infected</div>
-          </div>
-          <div className="bg-zinc-900 rounded-lg p-4 text-center">
-            <XCircle className="w-6 h-6 text-red-400 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-red-400">{stats.failed}</div>
-            <div className="text-xs text-zinc-500">Failed</div>
-          </div>
-          <div className="bg-zinc-900 rounded-lg p-4 text-center">
-            <AlertTriangle className="w-6 h-6 text-yellow-400 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-yellow-400">{stats.immune}</div>
-            <div className="text-xs text-zinc-500">Immune</div>
-          </div>
-          <div className="bg-zinc-900 rounded-lg p-4 text-center">
-            <Server className="w-6 h-6 text-blue-400 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-blue-400">{stats.discovered}</div>
-            <div className="text-xs text-zinc-500">Ready</div>
-          </div>
+          <Card className="bg-zinc-900 border-zinc-800">
+            <CardContent className="pt-6 text-center">
+              <Globe className="w-6 h-6 text-zinc-400 mx-auto mb-2" />
+              <div className="text-2xl font-bold">{stats.total}</div>
+              <p className="text-xs text-zinc-500">Discovered</p>
+            </CardContent>
+          </Card>
+          <Card className="bg-zinc-900 border-zinc-800">
+            <CardContent className="pt-6 text-center">
+              <CheckCircle className="w-6 h-6 text-green-400 mx-auto mb-2" />
+              <div className="text-2xl font-bold text-green-400">{stats.infected}</div>
+              <p className="text-xs text-zinc-500">Infected</p>
+            </CardContent>
+          </Card>
+          <Card className="bg-zinc-900 border-zinc-800">
+            <CardContent className="pt-6 text-center">
+              <XCircle className="w-6 h-6 text-red-400 mx-auto mb-2" />
+              <div className="text-2xl font-bold text-red-400">{stats.failed}</div>
+              <p className="text-xs text-zinc-500">Failed</p>
+            </CardContent>
+          </Card>
+          <Card className="bg-zinc-900 border-zinc-800">
+            <CardContent className="pt-6 text-center">
+              <AlertTriangle className="w-6 h-6 text-yellow-400 mx-auto mb-2" />
+              <div className="text-2xl font-bold text-yellow-400">{stats.immune}</div>
+              <p className="text-xs text-zinc-500">Immune</p>
+            </CardContent>
+          </Card>
+          <Card className="bg-zinc-900 border-zinc-800">
+            <CardContent className="pt-6 text-center">
+              <Server className="w-6 h-6 text-blue-400 mx-auto mb-2" />
+              <div className="text-2xl font-bold text-blue-400">{stats.discovered}</div>
+              <p className="text-xs text-zinc-500">Ready</p>
+            </CardContent>
+          </Card>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column */}
           <div className="lg:col-span-2 space-y-6">
             {/* Scanner */}
-            <div className="bg-zinc-900 rounded-lg p-6">
-              <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <Search className="w-5 h-5 text-green-400" />
-                Network Scanner
-              </h2>
+            <Card className="bg-zinc-900 border-zinc-800">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Search className="w-5 h-5 text-green-400" />
+                  Network Scanner
+                </CardTitle>
+                <CardDescription>Scan for hosts with SSH/SMB ports</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex gap-4">
+                  <Input
+                    value={targetRange}
+                    onChange={e => setTargetRange(e.target.value)}
+                    placeholder="192.168.1.0/24"
+                    className="flex-1 bg-zinc-800 border-zinc-700 font-mono"
+                  />
+                  <Button onClick={startScan} disabled={scanning} className="bg-green-600 hover:bg-green-500">
+                    <Wifi className={`w-4 h-4 mr-2 ${scanning ? 'animate-pulse' : ''}`} />
+                    {scanning ? 'Scanning...' : 'Scan'}
+                  </Button>
+                </div>
 
-              <div className="flex gap-4 mb-4">
-                <input
-                  type="text"
-                  value={targetRange}
-                  onChange={e => setTargetRange(e.target.value)}
-                  placeholder="192.168.1.0/24"
-                  className="flex-1 bg-zinc-800 border border-zinc-700 rounded px-4 py-2 focus:outline-none focus:border-green-500 font-mono"
-                />
-                <button
-                  onClick={startScan}
-                  disabled={scanning}
-                  className="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-500 disabled:opacity-50 transition flex items-center gap-2"
-                >
-                  <Wifi className={`w-4 h-4 ${scanning ? 'animate-pulse' : ''}`} />
-                  {scanning ? 'Scanning...' : 'Scan'}
-                </button>
-              </div>
-
-              {/* Hosts Table */}
-              <div className="bg-zinc-800 rounded overflow-hidden max-h-96 overflow-y-auto">
-                <table className="w-full text-sm">
-                  <thead className="bg-zinc-700 sticky top-0">
-                    <tr>
-                      <th className="text-left px-4 py-2">Host</th>
-                      <th className="text-left px-4 py-2">IP</th>
-                      <th className="text-left px-4 py-2">Services</th>
-                      <th className="text-left px-4 py-2">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {hosts.map(host => (
-                      <tr
-                        key={host.ip}
-                        onClick={() => setSelectedHost(selectedHost === host.ip ? null : host.ip)}
-                        className={`border-t border-zinc-700 cursor-pointer transition ${selectedHost === host.ip ? 'bg-zinc-700' : 'hover:bg-zinc-750'}`}
-                      >
-                        <td className="px-4 py-2">
-                          <div className="font-medium">{host.hostname || '-'}</div>
-                          <div className="text-xs text-zinc-500">{host.os || 'Unknown'}</div>
-                        </td>
-                        <td className="px-4 py-2 font-mono text-zinc-400">{host.ip}</td>
-                        <td className="px-4 py-2">
-                          <div className="flex gap-1">
-                            {host.ports.map(p => (
-                              <span key={p} className="px-2 py-0.5 bg-zinc-700 rounded text-xs">{host.services[p]}</span>
-                            ))}
-                          </div>
-                        </td>
-                        <td className="px-4 py-2">
-                          {host.status === 'infected' && (
-                            <span className="flex items-center gap-1 text-green-400">
-                              <CheckCircle className="w-4 h-4" /> Infected
-                            </span>
-                          )}
-                          {host.status === 'failed' && (
-                            <span className="flex items-center gap-1 text-red-400">
-                              <XCircle className="w-4 h-4" /> Failed
-                            </span>
-                          )}
-                          {host.status === 'immune' && (
-                            <span className="flex items-center gap-1 text-yellow-400">
-                              <AlertTriangle className="w-4 h-4" /> Immune
-                            </span>
-                          )}
-                          {host.status === 'discovered' && (
-                            <span className="text-blue-400">Ready</span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+                {/* Hosts Table */}
+                <div className="rounded-md border border-zinc-800 overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-zinc-800 hover:bg-zinc-800">
+                        <TableHead>Host</TableHead>
+                        <TableHead>IP</TableHead>
+                        <TableHead>Services</TableHead>
+                        <TableHead>Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {hosts.map(host => (
+                        <TableRow
+                          key={host.ip}
+                          onClick={() => setSelectedHost(selectedHost === host.ip ? null : host.ip)}
+                          className={`cursor-pointer ${selectedHost === host.ip ? 'bg-zinc-800' : ''}`}
+                        >
+                          <TableCell>
+                            <div className="font-medium">{host.hostname || '-'}</div>
+                            <div className="text-xs text-zinc-500">{host.os || 'Unknown'}</div>
+                          </TableCell>
+                          <TableCell className="font-mono text-zinc-400">{host.ip}</TableCell>
+                          <TableCell>
+                            <div className="flex gap-1">
+                              {host.ports.map(p => (
+                                <Badge key={p} variant="secondary" className="text-xs">{host.services[p]}</Badge>
+                              ))}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {host.status === 'infected' && <Badge className="bg-green-600">Infected</Badge>}
+                            {host.status === 'failed' && <Badge variant="destructive">Failed</Badge>}
+                            {host.status === 'immune' && <Badge className="bg-yellow-600">Immune</Badge>}
+                            {host.status === 'discovered' && <Badge variant="outline">Ready</Badge>}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Spread Config */}
-            <div className="bg-zinc-900 rounded-lg p-6">
-              <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <Zap className="w-5 h-5 text-green-400" />
-                Spread Configuration
-              </h2>
-
-              <div className="flex flex-wrap gap-6 mb-4">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={vectors.ssh}
-                    onChange={e => setVectors(v => ({ ...v, ssh: e.target.checked }))}
-                    className="w-4 h-4 accent-green-500"
-                  />
-                  <span>SSH (Port 22)</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={vectors.smb}
-                    onChange={e => setVectors(v => ({ ...v, smb: e.target.checked }))}
-                    className="w-4 h-4 accent-green-500"
-                  />
-                  <span>SMB (Port 445)</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={trollMode}
-                    onChange={e => setTrollMode(e.target.checked)}
-                    className="w-4 h-4 accent-green-500"
-                  />
-                  <span className="text-green-400">Troll Mode</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={dryRun}
-                    onChange={e => setDryRun(e.target.checked)}
-                    className="w-4 h-4 accent-yellow-500"
-                  />
-                  <span className="text-yellow-400">Dry Run</span>
-                </label>
-              </div>
-
-              <button
-                onClick={startSpread}
-                disabled={hosts.length === 0}
-                className="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-500 disabled:opacity-50 transition"
-              >
-                Start Spread
-              </button>
-            </div>
+            <Card className="bg-zinc-900 border-zinc-800">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Zap className="w-5 h-5 text-green-400" />
+                  Spread Configuration
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex flex-wrap gap-6">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <Checkbox checked={vectors.ssh} onCheckedChange={c => setVectors(v => ({ ...v, ssh: !!c }))} />
+                    <span>SSH (Port 22)</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <Checkbox checked={vectors.smb} onCheckedChange={c => setVectors(v => ({ ...v, smb: !!c }))} />
+                    <span>SMB (Port 445)</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <Checkbox checked={trollMode} onCheckedChange={c => setTrollMode(!!c)} />
+                    <span className="text-green-400">Troll Mode</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <Checkbox checked={dryRun} onCheckedChange={c => setDryRun(!!c)} />
+                    <span className="text-yellow-400">Dry Run</span>
+                  </label>
+                </div>
+                <Button onClick={startSpread} disabled={hosts.length === 0} className="bg-green-600 hover:bg-green-500">
+                  Start Spread
+                </Button>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Right Column - Activity Log */}
-          <div className="bg-zinc-900 rounded-lg p-6 h-fit">
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <Activity className="w-5 h-5 text-green-400" />
-              Activity Log
-            </h2>
-
-            <div className="bg-zinc-950 rounded p-4 font-mono text-xs max-h-[600px] overflow-auto space-y-1">
-              {logs.map((log, i) => (
-                <div key={i} className="flex gap-2">
-                  <span className="text-zinc-600 shrink-0">{log.time}</span>
-                  <span className={
-                    log.type === 'success' ? 'text-green-400' :
-                    log.type === 'error' ? 'text-red-400' :
-                    log.type === 'warning' ? 'text-yellow-400' :
-                    'text-zinc-400'
-                  }>
-                    {log.message}
-                  </span>
-                </div>
-              ))}
-            </div>
-
-            <button
-              onClick={() => setLogs([])}
-              className="mt-4 text-xs text-zinc-500 hover:text-zinc-300"
-            >
-              Clear logs
-            </button>
-          </div>
+          <Card className="bg-zinc-900 border-zinc-800 h-fit">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Activity className="w-5 h-5 text-green-400" />
+                Activity Log
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="bg-zinc-950 rounded p-4 font-mono text-xs max-h-[500px] overflow-auto space-y-1">
+                {logs.map((log, i) => (
+                  <div key={i} className="flex gap-2">
+                    <span className="text-zinc-600 shrink-0">{log.time}</span>
+                    <span className={
+                      log.type === 'success' ? 'text-green-400' :
+                      log.type === 'error' ? 'text-red-400' :
+                      log.type === 'warning' ? 'text-yellow-400' :
+                      'text-zinc-400'
+                    }>
+                      {log.message}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setLogs([])} className="mt-4 text-xs">
+                Clear logs
+              </Button>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Selected Host Detail */}
         {selectedHost && (
-          <div className="bg-zinc-900 rounded-lg p-6">
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <Terminal className="w-5 h-5 text-green-400" />
-              Host Details: {hosts.find(h => h.ip === selectedHost)?.hostname || selectedHost}
-            </h2>
-            <div className="grid grid-cols-4 gap-4 text-sm">
-              <div>
-                <div className="text-zinc-500">IP Address</div>
-                <div className="font-mono">{selectedHost}</div>
+          <Card className="bg-zinc-900 border-zinc-800">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Terminal className="w-5 h-5 text-green-400" />
+                Host Details: {hosts.find(h => h.ip === selectedHost)?.hostname || selectedHost}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-4 gap-4 text-sm">
+                <div>
+                  <div className="text-zinc-500">IP Address</div>
+                  <div className="font-mono">{selectedHost}</div>
+                </div>
+                <div>
+                  <div className="text-zinc-500">Operating System</div>
+                  <div>{hosts.find(h => h.ip === selectedHost)?.os || 'Unknown'}</div>
+                </div>
+                <div>
+                  <div className="text-zinc-500">Open Ports</div>
+                  <div>{hosts.find(h => h.ip === selectedHost)?.ports.join(', ')}</div>
+                </div>
+                <div>
+                  <div className="text-zinc-500">Last Attempt</div>
+                  <div>{hosts.find(h => h.ip === selectedHost)?.lastAttempt || 'Never'}</div>
+                </div>
               </div>
-              <div>
-                <div className="text-zinc-500">Operating System</div>
-                <div>{hosts.find(h => h.ip === selectedHost)?.os || 'Unknown'}</div>
-              </div>
-              <div>
-                <div className="text-zinc-500">Open Ports</div>
-                <div>{hosts.find(h => h.ip === selectedHost)?.ports.join(', ')}</div>
-              </div>
-              <div>
-                <div className="text-zinc-500">Last Attempt</div>
-                <div>{hosts.find(h => h.ip === selectedHost)?.lastAttempt || 'Never'}</div>
-              </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         )}
       </main>
     </div>
