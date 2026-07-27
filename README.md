@@ -18,7 +18,7 @@ This project is _strictly for educational/research purposes_, any malicious acti
 - [ ] Embedded payload support
 - [x] Cross-platform (Windows/Linux)
 - [x] Configurable scan ranges
-- [ ] Stealth mode
+- [x] Stealth mode
 - [x] Web UI control panel
 - [x] Troll mode (youve-been-glowed.txt, firefly video)
 
