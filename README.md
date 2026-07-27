@@ -13,12 +13,14 @@ This project is _strictly for educational/research purposes_, any malicious acti
 
 ## Features
 
-- [ ] Self-propagation via network scanning
-- [ ] Multiple spreading vectors (SSH, SMB, exploits)
+- [x] Self-propagation via network scanning
+- [x] Multiple spreading vectors (SSH, SMB)
 - [ ] Embedded payload support
-- [ ] Cross-platform (Windows/Linux)
-- [ ] Configurable scan ranges
+- [x] Cross-platform (Windows/Linux)
+- [x] Configurable scan ranges
 - [ ] Stealth mode
+- [x] Web UI control panel
+- [x] Troll mode (youve-been-glowed.txt, firefly video)
 
 ## Installation
 
